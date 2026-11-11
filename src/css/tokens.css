@@ -1,0 +1,85 @@
+:root {
+  color-scheme: light;
+
+  --font-sans: "Avenir Next", Avenir, "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+
+  --color-canvas: #faf6ee;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f4efe5;
+  --color-ink: #1c2024;
+  --color-ink-soft: #4c535b;
+  --color-ink-muted: #5c636b;
+  --color-line: #e6dfd2;
+  --color-line-strong: #9a9081;
+  --color-primary: #1c2024;
+  --color-primary-contrast: #fffdf8;
+  --color-danger: #a3231b;
+  --color-danger-soft: #fbe9e7;
+  --color-focus: #0b57d0;
+  --color-scrim: rgb(20 24 28 / 0.5);
+
+  --color-sand: #f3e3c3;
+  --color-peach: #fad6c2;
+  --color-rose: #f7cdd5;
+  --color-lavender: #e6daf5;
+  --color-sky: #cfe4f7;
+  --color-mint: #cdefda;
+  --color-lime: #e6efc3;
+  --color-stone: #e4e4de;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-full: 999rem;
+
+  --shadow-sm: 0 0.0625rem 0.125rem rgb(28 32 36 / 0.06), 0 0.125rem 0.5rem rgb(28 32 36 / 0.05);
+  --shadow-md: 0 0.5rem 1.5rem rgb(28 32 36 / 0.1);
+  --shadow-lg: 0 1.25rem 3rem rgb(28 32 36 / 0.18);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  --transition: 180ms cubic-bezier(0.2, 0, 0, 1);
+  --drawer-width: 19rem;
+  --content-width: 46rem;
+}
+
+[data-color="sand"] {
+  --list-bg: var(--color-sand);
+}
+
+[data-color="peach"] {
+  --list-bg: var(--color-peach);
+}
+
+[data-color="rose"] {
+  --list-bg: var(--color-rose);
+}
+
+[data-color="lavender"] {
+  --list-bg: var(--color-lavender);
+}
+
+[data-color="sky"] {
+  --list-bg: var(--color-sky);
+}
+
+[data-color="mint"] {
+  --list-bg: var(--color-mint);
+}
+
+[data-color="lime"] {
+  --list-bg: var(--color-lime);
+}
+
+[data-color="stone"] {
+  --list-bg: var(--color-stone);
+}

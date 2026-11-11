@@ -1,0 +1,14 @@
+# Dependencias
+node_modules/
+
+# Directorios de compilación y producción
+dist/
+
+# Archivos de caché y temporales de Vite
+.vite/
+.DS_Store
+
+# Logs de npm
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
