@@ -16,7 +16,7 @@ html {
 body {
   min-height: 100dvh;
   background-color: var(--color-canvas);
-  background-image: radial-gradient(circle at 0.0625rem 0.0625rem, rgb(28 32 36 / 0.035) 0.0625rem, transparent 0);
+  background-image: radial-gradient(circle at 0.0625rem 0.0625rem, var(--color-dot-pattern) 0.0625rem, transparent 0);
   background-size: 1.25rem 1.25rem;
   color: var(--color-ink);
   font-family: var(--font-sans);

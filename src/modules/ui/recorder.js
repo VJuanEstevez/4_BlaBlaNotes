@@ -22,12 +22,20 @@ const ERROR_MESSAGES = {
 };
 
 let onSaveNote = null;
-let getLanguage = () => 'es-ES';
+let getLanguage = () => 'auto';
 let recognition = null;
 let listening = false;
 let manualStop = false;
 let interimText = '';
 let lastErrorCode = null;
+
+function resolveLanguage(language) {
+  if (language && language !== 'auto') {
+    return language;
+  }
+
+  return navigator.language || 'es-ES';
+}
 
 function setStatus(message, { error = false } = {}) {
   statusElement.textContent = message;
@@ -41,7 +49,11 @@ function updateInterim() {
 
 function updateUi() {
   dialog.classList.toggle('is-recording', listening);
-  toggleButton.textContent = listening ? 'Detener dictado' : (textarea.value.trim() ? 'Continuar dictado' : 'Empezar a dictar');
+  toggleButton.textContent = listening
+    ? 'Detener dictado'
+    : textarea.value.trim()
+      ? 'Continuar dictado'
+      : 'Empezar a dictar';
   saveButton.disabled = !textarea.value.trim();
   updateInterim();
 }
@@ -157,7 +169,7 @@ function handleEnd() {
 function createRecognition() {
   const Recognition = getSpeechRecognition();
   const instance = new Recognition();
-  instance.lang = getLanguage();
+  instance.lang = resolveLanguage(getLanguage());
   instance.continuous = true;
   instance.interimResults = true;
   instance.maxAlternatives = 1;
@@ -295,7 +307,7 @@ export function initRecorder({ getLanguage: languageGetter, onSaveNote: saveHand
       lastErrorCode = null;
       manualStop = false;
       hintElement.textContent = supported
-        ? 'Puedes corregir el texto antes de guardarlo.'
+        ? 'Dicta mientras escribes; puedes corregir el texto antes de guardar.'
         : 'Tu navegador no admite el dictado. Escribe la nota manualmente.';
       toggleButton.hidden = !supported;
       setStatus(supported ? 'Preparando el micrófono…' : 'Tu navegador no admite el dictado.');
@@ -306,7 +318,7 @@ export function initRecorder({ getLanguage: languageGetter, onSaveNote: saveHand
         toggleButton.focus({ preventScroll: true });
         startRecognition();
       } else {
-        textarea.focus();
+        textarea.focus({ preventScroll: true });
       }
     }
   };

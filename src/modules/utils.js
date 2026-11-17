@@ -93,3 +93,4 @@ export async function copyText(text) {
 export function getSpeechRecognition() {
   return window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null;
 }
+

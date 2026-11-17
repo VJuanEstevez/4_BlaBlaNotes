@@ -21,7 +21,10 @@ export const LIST_COLORS = [
 export const COLOR_IDS = LIST_COLORS.map((color) => color.id);
 export const DEFAULT_COLOR = 'sand';
 
+/* Idiomas para el reconocimiento de voz del navegador (BCP 47).
+   «auto» usa el idioma configurado en el dispositivo. */
 export const SPEECH_LANGUAGES = [
+  { id: 'auto', label: 'Usar el idioma del navegador' },
   { id: 'es-ES', label: 'Español (España)' },
   { id: 'es-MX', label: 'Español (México)' },
   { id: 'es-AR', label: 'Español (Argentina)' },
@@ -30,8 +33,16 @@ export const SPEECH_LANGUAGES = [
   { id: 'pt-BR', label: 'Portugués (Brasil)' },
   { id: 'fr-FR', label: 'Francés (Francia)' },
   { id: 'de-DE', label: 'Alemán (Alemania)' },
+  { id: 'it-IT', label: 'Italiano' },
   { id: 'ca-ES', label: 'Catalán' }
 ];
 
 export const SPEECH_LANGUAGE_IDS = SPEECH_LANGUAGES.map((language) => language.id);
-export const DEFAULT_SETTINGS = { lang: 'es-ES' };
+
+export const THEMES = [
+  { id: 'system', label: 'Seguir el sistema' },
+  { id: 'light', label: 'Claro' },
+  { id: 'dark', label: 'Oscuro' }
+];
+export const THEME_IDS = THEMES.map((theme) => theme.id);
+export const DEFAULT_SETTINGS = { lang: 'auto', theme: 'system' };

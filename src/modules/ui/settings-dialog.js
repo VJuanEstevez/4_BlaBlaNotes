@@ -1,10 +1,14 @@
 import { APP_VERSION, SPEECH_LANGUAGES } from '../constants.js';
-import { getState, replaceState, resetState, updateSettings } from '../store.js';
+import { getState, replaceState, resetState, subscribe, updateSettings } from '../store.js';
 import { askConfirm } from './confirm-dialog.js';
+import { resolveTheme } from './theme.js';
 import { showToast } from './toast.js';
 
 const dialog = document.getElementById('settings-dialog');
 const languageSelect = document.getElementById('speech-language');
+const themeSwitch = document.getElementById('theme-switch');
+const themeSystemButton = document.getElementById('theme-system');
+const themeSwitchHint = document.getElementById('theme-switch-hint');
 const exportButton = document.getElementById('export-button');
 const importButton = document.getElementById('import-button');
 const importFile = document.getElementById('import-file');
@@ -19,9 +23,34 @@ function populateLanguages() {
   }
 }
 
+function syncThemeControls(state = getState()) {
+  const followsSystem = state.settings.theme === 'system';
+  const isDark = resolveTheme(state.settings.theme) === 'dark';
+
+  if (themeSwitch.checked !== isDark) {
+    themeSwitch.checked = isDark;
+  }
+
+  themeSwitchHint.textContent = followsSystem
+    ? 'Ahora sigue el tema de tu dispositivo.'
+    : 'Cambia la apariencia de BlaBlaNotes.';
+  themeSystemButton.hidden = followsSystem;
+}
+
+function syncControls() {
+  const state = getState();
+
+  if (document.activeElement !== languageSelect) {
+    languageSelect.value = state.settings.lang;
+  }
+
+  syncThemeControls(state);
+}
+
 function exportData() {
   const state = getState();
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const payload = { ...state };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   const stamp = new Date().toISOString().slice(0, 10);
@@ -74,7 +103,6 @@ async function handleImport() {
   }
 
   showToast('Copia importada correctamente.');
-  languageSelect.value = getState().settings.lang;
 }
 
 async function handleReset() {
@@ -102,6 +130,15 @@ export function initSettingsDialog() {
     updateSettings({ lang: languageSelect.value });
   });
 
+  themeSwitch.addEventListener('change', () => {
+    updateSettings({ theme: themeSwitch.checked ? 'dark' : 'light' });
+  });
+
+  themeSystemButton.addEventListener('click', () => {
+    updateSettings({ theme: 'system' });
+    showToast('Se sigue el tema del sistema.');
+  });
+
   exportButton.addEventListener('click', exportData);
   importButton.addEventListener('click', () => importFile.click());
   importFile.addEventListener('change', handleImport);
@@ -113,9 +150,12 @@ export function initSettingsDialog() {
     }
   });
 
+  subscribe(syncControls);
+  syncControls();
+
   return {
     open() {
-      languageSelect.value = getState().settings.lang;
+      syncControls();
       dialog.showModal();
     }
   };

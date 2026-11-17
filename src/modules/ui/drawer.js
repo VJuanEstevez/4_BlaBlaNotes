@@ -1,7 +1,12 @@
-import { getState, setActiveList } from '../store.js';
+import { askConfirm } from './confirm-dialog.js';
+import { deleteList, getState, setActiveList } from '../store.js';
 import { formatNoteCount } from '../utils.js';
+import { showToast } from './toast.js';
 
 const desktopQuery = window.matchMedia('(min-width: 64rem)');
+
+const TRASH_ICON =
+  '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M9 7V4h6v3M10 11v6M14 11v6M6.5 7l.8 13h9.4l.8-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>';
 
 let elements = null;
 let isOpen = false;
@@ -105,7 +110,51 @@ function handleKeydown(event) {
   }
 }
 
-function handleListSelection(event) {
+function focusDeleteButton(listId) {
+  elements.listMenu
+    .querySelector(`[data-delete-list-id="${CSS.escape(listId)}"]`)
+    ?.focus({ preventScroll: true });
+}
+
+function focusAfterDelete(deletedIndex) {
+  const deleteButtons = elements.listMenu.querySelectorAll('[data-delete-list-id]');
+  const target = deleteButtons[Math.min(deletedIndex, deleteButtons.length - 1)] ?? elements.newListButton;
+  target?.focus({ preventScroll: true });
+}
+
+async function handleDeleteList(listId) {
+  const index = getState().lists.findIndex((entry) => entry.id === listId);
+  const list = index === -1 ? null : getState().lists[index];
+
+  if (!list) {
+    return;
+  }
+
+  const notesPart = list.notes.length === 0 ? ' (está vacía)' : ` junto con ${formatNoteCount(list.notes.length)}`;
+  const confirmed = await askConfirm({
+    title: 'Eliminar lista',
+    message: `Se eliminará «${list.title}»${notesPart}. Esta acción no se puede deshacer.`,
+    confirmLabel: 'Eliminar lista'
+  });
+
+  if (!confirmed) {
+    focusDeleteButton(listId);
+    return;
+  }
+
+  deleteList(listId);
+  focusAfterDelete(index);
+  showToast('Lista eliminada.');
+}
+
+async function handleListClick(event) {
+  const deleteButton = event.target.closest('[data-delete-list-id]');
+
+  if (deleteButton) {
+    await handleDeleteList(deleteButton.dataset.deleteListId);
+    return;
+  }
+
   const button = event.target.closest('[data-list-id]');
 
   if (!button) {
@@ -127,6 +176,8 @@ export function renderDrawer(state) {
 
   for (const list of state.lists) {
     const item = document.createElement('li');
+    item.className = 'list-menu__item';
+
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'list-menu__button';
@@ -147,7 +198,16 @@ export function renderDrawer(state) {
     count.textContent = formatNoteCount(list.notes.length);
 
     button.append(title, count);
-    item.append(button);
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'icon-button icon-button--small list-menu__delete tooltip--top tooltip--end';
+    deleteButton.dataset.deleteListId = list.id;
+    deleteButton.setAttribute('aria-label', `Eliminar lista: ${list.title}`);
+    deleteButton.setAttribute('data-tooltip', 'Eliminar lista');
+    deleteButton.innerHTML = TRASH_ICON;
+
+    item.append(button, deleteButton);
     elements.listMenu.append(item);
   }
 }
@@ -168,7 +228,7 @@ export function initDrawer({ onNewList, onSettings }) {
   elements.menuButton.addEventListener('click', openDrawer);
   elements.closeButton.addEventListener('click', () => closeDrawer());
   elements.scrim.addEventListener('click', () => closeDrawer());
-  elements.listMenu.addEventListener('click', handleListSelection);
+  elements.listMenu.addEventListener('click', handleListClick);
 
   elements.newListButton.addEventListener('click', () => {
     const trigger = desktopQuery.matches ? elements.newListButton : elements.menuButton;

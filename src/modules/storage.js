@@ -6,7 +6,9 @@ import {
   MAX_NOTE_LENGTH,
   MAX_TITLE_LENGTH,
   SPEECH_LANGUAGE_IDS,
-  STORAGE_KEY
+  SPEECH_LANGUAGES,
+  STORAGE_KEY,
+  THEME_IDS
 } from './constants.js';
 import { createId } from './utils.js';
 
@@ -35,6 +37,25 @@ function normalizeDate(value, fallback) {
   }
 
   return date.toISOString();
+}
+
+function normalizeLanguage(value) {
+  if (SPEECH_LANGUAGE_IDS.includes(value)) {
+    return value;
+  }
+
+  // Datos antiguos guardados con un código corto («es», «en»…): se amplía al idioma más cercano.
+  const base = typeof value === 'string' ? value.split('-')[0] : '';
+
+  if (base) {
+    const match = SPEECH_LANGUAGES.find((language) => language.id.split('-')[0] === base);
+
+    if (match) {
+      return match.id;
+    }
+  }
+
+  return DEFAULT_SETTINGS.lang;
 }
 
 export function normalizeState(raw) {
@@ -105,14 +126,15 @@ export function normalizeState(raw) {
   });
 
   const activeListId = lists.some((list) => list.id === raw.activeListId) ? raw.activeListId : (lists[0]?.id ?? null);
-  const language = raw.settings?.lang;
-  const lang = SPEECH_LANGUAGE_IDS.includes(language) ? language : DEFAULT_SETTINGS.lang;
+  const lang = normalizeLanguage(raw.settings?.lang);
+  const theme = raw.settings?.theme;
+  const resolvedTheme = THEME_IDS.includes(theme) ? theme : DEFAULT_SETTINGS.theme;
 
   return {
     version: DATA_VERSION,
     lists,
     activeListId,
-    settings: { ...DEFAULT_SETTINGS, lang }
+    settings: { ...DEFAULT_SETTINGS, lang, theme: resolvedTheme }
   };
 }
 

@@ -1,46 +1,40 @@
-import { DEFAULT_COLOR, SHARE_TEXT_LIMIT } from './constants.js';
+import { DEFAULT_COLOR } from './constants.js';
 import {
   addNote,
   createList,
-  deleteList,
   getActiveList,
   getState,
   saveNow,
   subscribe,
   updateList
 } from './store.js';
-import { buildWhatsAppText, copyText, formatListSummary, formatNoteCount } from './utils.js';
+import { formatListSummary } from './utils.js';
 import { initDrawer, renderDrawer } from './ui/drawer.js';
 import { initNotesView, renderNotes } from './ui/notes-view.js';
 import { initListDialog } from './ui/list-dialog.js';
 import { initComposeDialog } from './ui/compose-dialog.js';
 import { initRecorder } from './ui/recorder.js';
 import { initSettingsDialog } from './ui/settings-dialog.js';
-import { askConfirm } from './ui/confirm-dialog.js';
+import { initTheme } from './ui/theme.js';
+import { shareList } from './ui/share.js';
 import { showToast } from './ui/toast.js';
 
 const topbar = document.getElementById('topbar');
 const topbarEyebrow = document.getElementById('topbar-eyebrow');
+const topbarTitles = document.querySelector('.topbar__titles');
 const topbarTitle = document.getElementById('topbar-title');
-const shareButton = document.getElementById('share-button');
-const listOptionsButton = document.getElementById('list-options-button');
+const topbarTitleButton = document.getElementById('topbar-titles');
 const noListsEmpty = document.getElementById('no-lists-empty');
 const notesSection = document.getElementById('notes-section');
 const notesEmpty = document.getElementById('notes-empty');
 const notesSummary = document.getElementById('notes-summary');
 const emptyCreateButton = document.getElementById('empty-create-button');
 const writeButton = document.getElementById('write-button');
+const shareButton = document.getElementById('share-button');
 const recordButton = document.getElementById('record-button');
 const mainElement = document.getElementById('main');
 
-const listActionsDialog = document.getElementById('list-actions-dialog');
-const listActionsName = document.getElementById('list-actions-name');
-const editListButton = document.getElementById('edit-list-button');
-const optionsShareButton = document.getElementById('options-share-button');
-const deleteListButton = document.getElementById('delete-list-button');
-
 let pendingAction = null;
-let actionsListId = null;
 
 function suggestColor() {
   const lists = getState().lists;
@@ -162,90 +156,15 @@ function openRecorder() {
   recorder.open(list);
 }
 
-async function shareList() {
+function openActiveListDialog() {
   const list = getActiveList();
 
   if (!list) {
     return;
   }
 
-  const text = buildWhatsAppText(list);
-
-  if (text.length > SHARE_TEXT_LIMIT) {
-    const copied = await copyText(text);
-    showToast(
-      copied
-        ? 'La lista es muy larga para WhatsApp. El texto completo se ha copiado al portapapeles.'
-        : 'La lista es demasiado larga para WhatsApp.',
-      { variant: copied ? 'default' : 'error' }
-    );
-    return;
-  }
-
-  const popup = window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-
-  if (popup) {
-    popup.opener = null;
-    return;
-  }
-
-  const copied = await copyText(text);
-  showToast(
-    copied ? 'No se ha podido abrir WhatsApp. El texto se ha copiado al portapapeles.' : 'No se ha podido abrir WhatsApp.',
-    { variant: copied ? 'default' : 'error' }
-  );
-}
-
-function openListActions() {
-  const list = getActiveList();
-
-  if (!list) {
-    return;
-  }
-
-  actionsListId = list.id;
-  listActionsName.textContent = list.title;
-  listActionsDialog.showModal();
-}
-
-function editActiveList() {
-  const list = getState().lists.find((entry) => entry.id === actionsListId);
-
-  listActionsDialog.close();
-
-  if (!list) {
-    return;
-  }
-
-  focusTrigger(listOptionsButton);
+  focusTrigger(topbarTitleButton);
   listDialog.open({ mode: 'edit', list });
-}
-
-async function deleteActiveList() {
-  const list = getState().lists.find((entry) => entry.id === actionsListId);
-
-  listActionsDialog.close();
-
-  if (!list) {
-    return;
-  }
-
-  const notesPart =
-    list.notes.length === 0 ? ' (está vacía)' : ` junto con ${formatNoteCount(list.notes.length)}`;
-  const confirmed = await askConfirm({
-    title: 'Eliminar lista',
-    message: `Se eliminará «${list.title}»${notesPart}. Esta acción no se puede deshacer.`,
-    confirmLabel: 'Eliminar lista'
-  });
-
-  if (!confirmed) {
-    focusTrigger(listOptionsButton);
-    return;
-  }
-
-  deleteList(list.id);
-  mainElement.focus({ preventScroll: true });
-  showToast('Lista eliminada.');
 }
 
 function render(state) {
@@ -255,15 +174,15 @@ function render(state) {
     topbar.dataset.color = list.color;
     topbarEyebrow.textContent = 'Lista activa';
     topbarTitle.textContent = list.title;
+    topbarTitleButton.disabled = false;
     shareButton.hidden = false;
-    listOptionsButton.hidden = false;
     document.title = `${list.title} · BlaBlaNotes`;
   } else {
     delete topbar.dataset.color;
     topbarEyebrow.textContent = 'Notas por voz y texto';
     topbarTitle.textContent = 'BlaBlaNotes';
+    topbarTitleButton.disabled = true;
     shareButton.hidden = true;
-    listOptionsButton.hidden = true;
     document.title = 'BlaBlaNotes';
   }
 
@@ -279,6 +198,7 @@ function render(state) {
   renderNotes(state);
 }
 
+initTheme();
 initNotesView();
 initDrawer({
   onNewList(trigger) {
@@ -296,19 +216,21 @@ render(getState());
 writeButton.addEventListener('click', openWriter);
 recordButton.addEventListener('click', openRecorder);
 emptyCreateButton.addEventListener('click', () => openNewListDialog(emptyCreateButton));
-shareButton.addEventListener('click', shareList);
-listOptionsButton.addEventListener('click', openListActions);
+shareButton.addEventListener('click', () => {
+  const list = getActiveList();
 
-editListButton.addEventListener('click', editActiveList);
-optionsShareButton.addEventListener('click', () => {
-  listActionsDialog.close();
-  shareList();
+  if (list) {
+    void shareList(list);
+  }
 });
-deleteListButton.addEventListener('click', deleteActiveList);
 
-listActionsDialog.addEventListener('click', (event) => {
-  if (event.target === listActionsDialog) {
-    listActionsDialog.close();
+topbar.addEventListener('click', (event) => {
+  if (!(event.target instanceof Element) || !getActiveList()) {
+    return;
+  }
+
+  if (event.target === topbar || topbarTitles.contains(event.target)) {
+    openActiveListDialog();
   }
 });
 
